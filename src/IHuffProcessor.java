@@ -14,7 +14,7 @@ import java.io.OutputStream;
  */
 public interface IHuffProcessor extends IHuffConstants {  
 
-    /**
+    /**+
      * Make sure this model communicates with some view.
      * @param viewer is the view for communicating.
      */

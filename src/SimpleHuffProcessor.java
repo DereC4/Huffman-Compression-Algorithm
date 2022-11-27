@@ -19,6 +19,9 @@
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class SimpleHuffProcessor implements IHuffProcessor {
 
@@ -42,11 +45,76 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * @throws IOException if an error occurs while reading from the input file.
      */
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
-        showString("Not working yet");
-        myViewer.update("Still not working");
-        throw new IOException("preprocess not implemented");
+        BitInputStream bits = new BitInputStream(in);
+        Map<Integer, Integer> mapofwords = new TreeMap<>();
+        int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
+
+
+        while (inbits != -1) {
+            if(mapofwords.containsKey(inbits)){
+                int x = mapofwords.get(inbits);
+                mapofwords.put(inbits, x+1);
+            }
+            else {
+                mapofwords.put(inbits, 1);
+            }
+            inbits =  bits.readBits(IHuffConstants.BITS_PER_WORD);
+        }
+        mapofwords.put(IHuffConstants.PSEUDO_EOF, 1);
+
+
+        PriorityQueue<TreeNode> queue = new PriorityQueue<>(); 
+
+        for(Map.Entry<Integer, Integer> entry: mapofwords.entrySet()){
+            TreeNode node = new TreeNode(entry.getKey(), entry.getValue());
+            queue.enque(node);
+        }
+        TreeNode root = createTree(queue);
+
+        Map<Integer, String> values = getHuffCodes(root);
+        System.out.println(values);
+
+        return 0; 
         //return 0;
     }
+
+    public TreeNode createTree(PriorityQueue<TreeNode> queue){
+        while(queue.size() > 1){
+            TreeNode left = queue.deque();
+            TreeNode right = queue.deque();
+            TreeNode temp = new TreeNode(left, -1, right);
+            queue.enque(temp);
+        }
+        return queue.deque();
+    }
+
+    public Map<Integer, String> getHuffCodes(TreeNode node){
+        Map<Integer, String> curr = new TreeMap<>(); 
+        getHuffCodesHelper(curr, "", node);
+        return curr;
+    }
+
+    public void getHuffCodesHelper(Map<Integer, String> map, String current, TreeNode node){
+        if(node.getLeft() != null && node.getRight() != null){
+            String leftCurr = current + "0";
+            String rightCurr = current + "1";
+            getHuffCodesHelper(map, leftCurr, node.getLeft());
+            getHuffCodesHelper(map, rightCurr, node.getRight());
+        }
+        else if(node.getLeft() != null){
+            String curr = current + "0";
+            getHuffCodesHelper(map, current, node.getLeft());
+        }
+        else if(node.getRight() != null){
+            String curr = current + "1";
+            getHuffCodesHelper(map, current, node.getRight());
+        }
+        else{
+            map.put(node.getValue(), current);
+        }
+    }
+
+
 
     /**
 	 * Compresses input to output, where the same InputStream has
