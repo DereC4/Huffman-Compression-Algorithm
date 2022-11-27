@@ -1,4 +1,5 @@
 import javax.swing.UIManager;
+import java.util.TreeMap;
 
 /**
  * Main/launch program for Huff assignment. A better
