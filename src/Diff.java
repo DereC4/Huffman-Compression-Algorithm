@@ -11,7 +11,7 @@ import javax.swing.UIManager;
 /**
  * Compare two files to see if they are the same bit for bit.
  * @author Owen Astrachan
- *
+ *f
  */
 public class Diff {
  
