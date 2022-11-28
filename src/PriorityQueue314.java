@@ -1,11 +1,9 @@
-import java.util.ArrayList;
-import java.util.List; 
 import java.util.LinkedList;
 
-public class PriorityQueue<E extends Comparable<? super E>> {
+public class PriorityQueue314<E extends Comparable<? super E>> {
     LinkedList<E> list; 
 
-    public PriorityQueue(){
+    public PriorityQueue314(){
         list = new LinkedList<>();
     }
 

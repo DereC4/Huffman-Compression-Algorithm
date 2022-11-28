@@ -19,7 +19,6 @@
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -27,7 +26,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     private IHuffViewer myViewer;
     private Map<Integer, Integer> mapofwords;
-    private PriorityQueue<TreeNode> queue; 
+    private PriorityQueue314<TreeNode> queue;
     private Map<Integer, String> values; 
     private TreeNode root; 
 
@@ -52,6 +51,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         BitInputStream bits = new BitInputStream(in);
         mapofwords = getMapOfFreq(bits);
         queue = getQueue(mapofwords);
+        System.out.println(queue);
         root = createTree(queue);
 
         values = getHuffCodes(root);
@@ -59,7 +59,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         return 0; 
     }
 
-    public TreeNode createTree(PriorityQueue<TreeNode> queue){
+    public TreeNode createTree(PriorityQueue314<TreeNode> queue){
         while(queue.size() > 1){
             TreeNode left = queue.deque();
             TreeNode right = queue.deque();
@@ -113,8 +113,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         return mapofwords;
     }
 
-    public PriorityQueue<TreeNode> getQueue(Map<Integer, Integer> mapofwords){
-        PriorityQueue<TreeNode> queue = new PriorityQueue<>(); 
+    public PriorityQueue314<TreeNode> getQueue(Map<Integer, Integer> mapofwords){
+        PriorityQueue314<TreeNode> queue = new PriorityQueue314<>();
 
         for(Map.Entry<Integer, Integer> entry: mapofwords.entrySet()){
             TreeNode node = new TreeNode(entry.getKey(), entry.getValue());
@@ -188,9 +188,11 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * writing to the output file.
      */
     public int uncompress(InputStream in, OutputStream out) throws IOException {
-	        BitInputStream bis = new BitInputStream(in);
-
-	        return 0;
+        BitInputStream bis = new BitInputStream(in);
+        BitOutputStream bos = new BitOutputStream(out);
+        bos.writeBits(BITS_PER_INT, MAGIC_NUMBER);
+        bos.writeBits(BITS_PER_INT, STORE_COUNTS);
+        return 0;
     }
 
     public void setViewer(IHuffViewer viewer) {
