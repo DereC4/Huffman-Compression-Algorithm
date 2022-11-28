@@ -26,6 +26,10 @@ import java.util.TreeMap;
 public class SimpleHuffProcessor implements IHuffProcessor {
 
     private IHuffViewer myViewer;
+    private Map<Integer, Integer> mapofwords;
+    private PriorityQueue<TreeNode> queue; 
+    private Map<Integer, String> values; 
+    private TreeNode root; 
 
     /**
      * Preprocess data so that compression is possible ---
@@ -46,36 +50,13 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      */
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
         BitInputStream bits = new BitInputStream(in);
-        Map<Integer, Integer> mapofwords = new TreeMap<>();
-        int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
+        mapofwords = getMapOfFreq(bits);
+        queue = getQueue(mapofwords);
+        root = createTree(queue);
 
-
-        while (inbits != -1) {
-            if(mapofwords.containsKey(inbits)){
-                int x = mapofwords.get(inbits);
-                mapofwords.put(inbits, x+1);
-            }
-            else {
-                mapofwords.put(inbits, 1);
-            }
-            inbits =  bits.readBits(IHuffConstants.BITS_PER_WORD);
-        }
-        mapofwords.put(IHuffConstants.PSEUDO_EOF, 1);
-
-
-        PriorityQueue<TreeNode> queue = new PriorityQueue<>(); 
-
-        for(Map.Entry<Integer, Integer> entry: mapofwords.entrySet()){
-            TreeNode node = new TreeNode(entry.getKey(), entry.getValue());
-            queue.enque(node);
-        }
-        TreeNode root = createTree(queue);
-
-        Map<Integer, String> values = getHuffCodes(root);
+        values = getHuffCodes(root);
         System.out.println(values);
-
         return 0; 
-        //return 0;
     }
 
     public TreeNode createTree(PriorityQueue<TreeNode> queue){
@@ -114,6 +95,37 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         }
     }
 
+    public Map<Integer, Integer> getMapOfFreq(BitInputStream bits) throws IOException {
+        Map<Integer, Integer> mapofwords = new TreeMap<>();
+        int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
+        while (inbits != -1) {
+            if(mapofwords.containsKey(inbits)){
+                int x = mapofwords.get(inbits);
+                mapofwords.put(inbits, x+1);
+            }
+            else {
+                mapofwords.put(inbits, 1);
+            }
+            inbits =  bits.readBits(IHuffConstants.BITS_PER_WORD);
+        }
+        mapofwords.put(IHuffConstants.PSEUDO_EOF, 1);
+
+        return mapofwords;
+    }
+
+    public PriorityQueue<TreeNode> getQueue(Map<Integer, Integer> mapofwords){
+        PriorityQueue<TreeNode> queue = new PriorityQueue<>(); 
+
+        for(Map.Entry<Integer, Integer> entry: mapofwords.entrySet()){
+            TreeNode node = new TreeNode(entry.getKey(), entry.getValue());
+            queue.enque(node);
+        }
+
+        return queue;
+    }
+
+    
+
 
 
     /**
@@ -131,8 +143,39 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * writing to the output file.
      */
     public int compress(InputStream in, OutputStream out, boolean force) throws IOException {
-        throw new IOException("compress is not implemented");
-        //return 0;
+        BitInputStream bits = new BitInputStream(in);
+        BitOutputStream outs = new BitOutputStream(out);
+        outs.writeBits(BITS_PER_INT, MAGIC_NUMBER);
+        outs.writeBits(BITS_PER_INT, STORE_COUNTS);
+        System.out.println(mapofwords);
+
+
+        for(int k=0; k < IHuffConstants.ALPH_SIZE; k++) {
+            if(mapofwords.containsKey(k)){
+                outs.writeBits(BITS_PER_INT, mapofwords.get(k));
+            }
+            else{
+                outs.writeBits(BITS_PER_INT, 0);
+            }
+        }
+        //consider writing for 256
+        
+
+        int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
+        while (inbits != -1) {
+            String value = values.get(inbits);
+            for(int x = 0; x < value.length(); x++){
+                outs.writeBits(1, value.charAt(x));
+            }
+            inbits =  bits.readBits(IHuffConstants.BITS_PER_WORD);
+        }
+
+        String value = values.get(PSEUDO_EOF);
+        for(int x = 0; x < value.length(); x++){
+            outs.writeBits(1, value.charAt(x));
+        }
+
+        return 0;
     }
 
     /**
