@@ -206,9 +206,26 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         // IT WORKS!!!
         tempFreq.put(IHuffConstants.PSEUDO_EOF, 1);
         System.out.println(tempFreq);
+        PriorityQueue314<TreeNode> decompQueue = getQueue(tempFreq);
+        TreeNode decompRoot = createTree(decompQueue);
 
-//        root = createTreeRec(bis, root);
-//
+        while(inbits != -1) {
+
+        }
+
+
+        Map<Integer, String> decompValues = getHuffCodes(decompRoot);
+        System.out.println(decompValues);
+
+        int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
+        while (inbits != -1) {
+            String value = values.get(inbits);
+            for(int x = 0; x < value.length(); x++){
+                outs.writeBits(1, value.charAt(x));
+            }
+            inbits =  bits.readBits(IHuffConstants.BITS_PER_WORD);
+        }
+
 
 
         return 0;
