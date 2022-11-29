@@ -109,7 +109,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             inbits =  bits.readBits(IHuffConstants.BITS_PER_WORD);
         }
         mapofwords.put(IHuffConstants.PSEUDO_EOF, 1);
-
         return mapofwords;
     }
 
@@ -190,10 +189,46 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     public int uncompress(InputStream in, OutputStream out) throws IOException {
         BitInputStream bis = new BitInputStream(in);
         BitOutputStream bos = new BitOutputStream(out);
-        bos.writeBits(BITS_PER_INT, MAGIC_NUMBER);
-        bos.writeBits(BITS_PER_INT, STORE_COUNTS);
+        int magicNumba = bis.readBits(BITS_PER_INT);
+        if (magicNumba != MAGIC_NUMBER) {
+            throw new IOException("Error reading compressed file. \n" +
+                    "File did not start with the huff magic number.");
+        }
+        int countType = bis.readBits(BITS_PER_INT);
+        System.out.println(magicNumba);
+        System.out.println(countType);
+        Map<Integer, Integer> tempFreq = new TreeMap<>();
+        for(int k=0; k < IHuffConstants.ALPH_SIZE; k++) {
+            int frequencyInOriginalFile = bis.readBits(BITS_PER_INT);
+            tempFreq.put(frequencyInOriginalFile, 1);
+        }
+        System.out.println(tempFreq);
+
+
+//        root = createTreeRec(bis, root);
+//
+
+
         return 0;
     }
+
+
+//    public TreeNode createTreeRec(BitInputStream bis, TreeNode current) throws IOException {
+//        int tempBit = bis.readBits(1);
+//        if(tempBit == 0) {
+//            // Internal node
+//            TreeNode tempNode = new TreeNode(-1, -1);
+//            tempNode.setLeft(createTreeRec(bis, tempNode));
+//            tempNode.setRight(createTreeRec(bis, tempNode));
+//            return tempNode;
+//        }
+//        else if(tempBit == 1) {
+//            // Leaf node
+//            int nodeValue = bis.readBits(9);
+//            TreeNode tempNode = new TreeNode(nodeValue, -1);
+//            return tempNode;
+//        }
+//    }
 
     public void setViewer(IHuffViewer viewer) {
         myViewer = viewer;
