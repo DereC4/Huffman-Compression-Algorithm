@@ -50,8 +50,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
         BitInputStream bits = new BitInputStream(in);
         mapofwords = getMapOfFreq(bits);
+        System.out.println(mapofwords);
         queue = getQueue(mapofwords);
-        System.out.println(queue);
         root = createTree(queue);
 
         values = getHuffCodes(root);
@@ -195,15 +195,17 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                     "File did not start with the huff magic number.");
         }
         int countType = bis.readBits(BITS_PER_INT);
-        System.out.println(magicNumba);
-        System.out.println(countType);
         Map<Integer, Integer> tempFreq = new TreeMap<>();
+        // Undo the SCF compression which stored every character frequency
         for(int k=0; k < IHuffConstants.ALPH_SIZE; k++) {
             int frequencyInOriginalFile = bis.readBits(BITS_PER_INT);
-            tempFreq.put(frequencyInOriginalFile, 1);
+            if(frequencyInOriginalFile > 0) {
+                tempFreq.put(k, frequencyInOriginalFile);
+            }
         }
+        // IT WORKS!!!
+        tempFreq.put(IHuffConstants.PSEUDO_EOF, 1);
         System.out.println(tempFreq);
-
 
 //        root = createTreeRec(bis, root);
 //
