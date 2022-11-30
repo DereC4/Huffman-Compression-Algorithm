@@ -199,20 +199,24 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                 tempFreq.put(k, frequencyInOriginalFile);
             }
         }
-        // IT WORKS!!!
         tempFreq.put(IHuffConstants.PSEUDO_EOF, 1);
-        System.out.println("Printing: tempFreq" + tempFreq);
+//        System.out.println("Printing: tempFreq" + tempFreq);
         PriorityQueue314<TreeNode> decompQueue = getQueue(tempFreq);
         TreeNode decompRoot = createTree(decompQueue);
-
         int dirCheck = bis.readBits(1);
         while (dirCheck != -1) {
-            int treeVal = traverseTree(bis, decompRoot, dirCheck);
-            bos.writeBits(1, treeVal);
-            dirCheck = bis.readBits(1);
-            System.out.println((char) treeVal);
+            TreeNode currentRoot = decompRoot;
+            while (!(currentRoot.getLeft() == null && currentRoot.getRight() == null)) {
+                if (dirCheck == 0) {
+                    currentRoot = currentRoot.getLeft();
+                } else if (dirCheck == 1) {
+                    currentRoot = currentRoot.getRight();
+                }
+                dirCheck = bis.readBits(1);
+            }
+            int treeVal = currentRoot.getValue();
+            System.out.println(treeVal);
         }
-
         return 0;
     }
 
@@ -223,9 +227,10 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         int newTempBit = bis.readBits(1);
         if (dirCheck == 0) {
             return traverseTree(bis, current.getLeft(), newTempBit);
-        } else {
+        } else if (dirCheck == 1) {
             return traverseTree(bis, current.getRight(), newTempBit);
         }
+        return -1;
     }
 
     //    public TreeNode createTreeRec(BitInputStream bis, TreeNode current) throws IOException {
