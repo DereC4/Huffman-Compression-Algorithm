@@ -204,6 +204,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         System.out.println("Printing: tempFreq" + tempFreq);
         PriorityQueue314<TreeNode> decompQueue = getQueue(tempFreq);
         TreeNode decompRoot = createTree(decompQueue);
+
         int dirCheck = bis.readBits(1);
         while (dirCheck != -1) {
             int treeVal = traverseTree(bis, decompRoot, dirCheck);
