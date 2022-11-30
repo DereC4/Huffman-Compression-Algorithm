@@ -53,10 +53,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         System.out.println(mapofwords);
         queue = getQueue(mapofwords);
         root = createTree(queue);
-
         values = getHuffCodes(root);
-        System.out.println(values);
-        return 0; 
+        return 0;
     }
 
     public TreeNode createTree(PriorityQueue314<TreeNode> queue){
@@ -208,29 +206,30 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         System.out.println(tempFreq);
         PriorityQueue314<TreeNode> decompQueue = getQueue(tempFreq);
         TreeNode decompRoot = createTree(decompQueue);
-
-        while(inbits != -1) {
-
+        int tempBit = bis.readBits(1);
+        while(tempBit != -1) {
+            int treeVal = traverseTree(bis, decompRoot, tempBit);
+            bos.writeBits(1, treeVal);
+            tempBit = bis.readBits(1);
+            System.out.println((char)treeVal);
         }
-
-
-        Map<Integer, String> decompValues = getHuffCodes(decompRoot);
-        System.out.println(decompValues);
-
-        int inbits = bits.readBits(IHuffConstants.BITS_PER_WORD);
-        while (inbits != -1) {
-            String value = values.get(inbits);
-            for(int x = 0; x < value.length(); x++){
-                outs.writeBits(1, value.charAt(x));
-            }
-            inbits =  bits.readBits(IHuffConstants.BITS_PER_WORD);
-        }
-
-
 
         return 0;
     }
 
+    private int traverseTree(BitInputStream bis, TreeNode current, int tempBit) throws IOException {
+        if(current.getLeft() == null && current.getRight() == null) {
+            return current.getValue();
+        }
+        if(tempBit == 0) {
+            int newTempBit = bis.readBits(1);
+            return traverseTree(bis, current.getLeft(), newTempBit);
+        }
+        else {
+            int newTempBit = bis.readBits(1);
+            return traverseTree(bis, current.getRight(), newTempBit);
+        }
+    }
 
 //    public TreeNode createTreeRec(BitInputStream bis, TreeNode current) throws IOException {
 //        int tempBit = bis.readBits(1);
@@ -248,7 +247,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 //            return tempNode;
 //        }
 //    }
-
     public void setViewer(IHuffViewer viewer) {
         myViewer = viewer;
     }
