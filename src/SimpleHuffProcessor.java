@@ -206,22 +206,19 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             int temp = decoder(bis, bos, decompRoot);
         }
         else if (countType == STORE_TREE) {
-
+            TreeNode decompRoot = new TreeNode(-1 , -1);
+            decompRoot = createTreeRec(bis, decompRoot);
+            int temp = decoder(bis, bos, decompRoot);
         }
-
-
         return 0;
     }
 
     private int decoder(BitInputStream bis, BitOutputStream bos, TreeNode decompRoot) throws IOException {
         boolean finished = false;
         TreeNode current = decompRoot;
-        while (!finished) {
-            int dirCheck = bis.readBits(1);
-            if (current.getValue() == PSEUDO_EOF) {
-                System.out.println("FINISHED");
-                finished = true;
-            }
+        int dirCheck = 0;
+        while (!finished && !(dirCheck == -1)) {
+            dirCheck = bis.readBits(1);
             if (dirCheck == -1) {
                 System.out.println("NO EOF");
 //                throw new IOException("Error reading compressed file. \n" +
@@ -246,35 +243,24 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         return 0;
     }
 
-    private int traverseTree(BitInputStream bis, TreeNode current, int dirCheck) throws IOException {
-        if (current.getLeft() == null && current.getRight() == null) {
-            return current.getValue();
+    public TreeNode createTreeRec(BitInputStream bis, TreeNode current) throws IOException {
+        int tempBit = bis.readBits(1);
+        if(tempBit == 0) {
+            // Internal node
+            TreeNode tempNode = new TreeNode(-1, -1);
+            tempNode.setLeft(createTreeRec(bis, tempNode));
+            tempNode.setRight(createTreeRec(bis, tempNode));
+            return tempNode;
         }
-        int newTempBit = bis.readBits(1);
-        if (dirCheck == 0) {
-            return traverseTree(bis, current.getLeft(), newTempBit);
-        } else if (dirCheck == 1) {
-            return traverseTree(bis, current.getRight(), newTempBit);
+        else if(tempBit == 1) {
+            // Leaf node
+            int nodeValue = bis.readBits(9);
+            TreeNode tempNode = new TreeNode(nodeValue, -1);
+            return tempNode;
         }
-        return -1;
+        return null;
     }
 
-    //    public TreeNode createTreeRec(BitInputStream bis, TreeNode current) throws IOException {
-//        int tempBit = bis.readBits(1);
-//        if(tempBit == 0) {
-//            // Internal node
-//            TreeNode tempNode = new TreeNode(-1, -1);
-//            tempNode.setLeft(createTreeRec(bis, tempNode));
-//            tempNode.setRight(createTreeRec(bis, tempNode));
-//            return tempNode;
-//        }
-//        else if(tempBit == 1) {
-//            // Leaf node
-//            int nodeValue = bis.readBits(9);
-//            TreeNode tempNode = new TreeNode(nodeValue, -1);
-//            return tempNode;
-//        }
-//    }
     public void setViewer(IHuffViewer viewer) {
         myViewer = viewer;
     }
