@@ -191,41 +191,55 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                     "File did not start with the huff magic number.");
         }
         int countType = bis.readBits(BITS_PER_INT);
-        Map<Integer, Integer> tempFreq = new TreeMap<>();
-        // Undo the SCF compression which stored every character frequency
-        for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
-            int frequencyInOriginalFile = bis.readBits(BITS_PER_INT);
-            if (frequencyInOriginalFile > 0) {
-                tempFreq.put(k, frequencyInOriginalFile);
+        if(countType == STORE_COUNTS) {
+            Map<Integer, Integer> tempFreq = new TreeMap<>();
+            // Undo the SCF compression which stored every character frequency
+            for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
+                int frequencyInOriginalFile = bis.readBits(BITS_PER_INT);
+                if (frequencyInOriginalFile > 0) {
+                    tempFreq.put(k, frequencyInOriginalFile);
+                }
             }
+            tempFreq.put(IHuffConstants.PSEUDO_EOF, 1);
+            PriorityQueue314<TreeNode> decompQueue = getQueue(tempFreq);
+            TreeNode decompRoot = createTree(decompQueue);
+            int temp = decoder(bis, bos, decompRoot);
         }
-        tempFreq.put(IHuffConstants.PSEUDO_EOF, 1);
-        PriorityQueue314<TreeNode> decompQueue = getQueue(tempFreq);
-        TreeNode decompRoot = createTree(decompQueue);
-        int temp = decoder(bis, bos, decompRoot);
+        else if (countType == STORE_TREE) {
+
+        }
+
+
         return 0;
     }
 
     private int decoder(BitInputStream bis, BitOutputStream bos, TreeNode decompRoot) throws IOException {
         boolean finished = false;
-        TreeNode startingRoot = decompRoot;
+        TreeNode current = decompRoot;
         while (!finished) {
             int dirCheck = bis.readBits(1);
+            if (current.getValue() == PSEUDO_EOF) {
+                System.out.println("FINISHED");
+                finished = true;
+            }
             if (dirCheck == -1) {
-                throw new IOException("Error reading compressed file. \n" +
-                        "unexpected end of input. No PSEUDO_EOF value.");
+                System.out.println("NO EOF");
+//                throw new IOException("Error reading compressed file. \n" +
+//                        "unexpected end of input. No PSEUDO_EOF value.");
             } else {
-                if (startingRoot.getValue() == PSEUDO_EOF) {
+                if (dirCheck == 0) {
+                    current = current.getLeft();
+                } else if (dirCheck == 1) {
+                    current = current.getRight();
+                }
+                if (current.getValue() == PSEUDO_EOF) {
+                    System.out.println("FINISHED");
                     finished = true;
-                } else if ((startingRoot.getLeft() == null && startingRoot.getRight() == null)) {
-                    int treeVal = startingRoot.getValue();
+                } else if (current.isLeaf()) {
+                    int treeVal = current.getValue();
                     System.out.println(treeVal);
                     bos.writeBits(BITS_PER_INT, treeVal);
-                    startingRoot = decompRoot;
-                } else if (dirCheck == 0) {
-                    startingRoot = startingRoot.getLeft();
-                } else if (dirCheck == 1) {
-                    startingRoot = startingRoot.getRight();
+                    current = decompRoot;
                 }
             }
         }
