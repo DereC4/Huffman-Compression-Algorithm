@@ -187,7 +187,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         BitOutputStream bos = new BitOutputStream(out);
         int magicNumba = bis.readBits(BITS_PER_INT);
         if (magicNumba != MAGIC_NUMBER) {
-            throw new IOException("Error reading compressed file. \n" +
+            myViewer.showError("Error reading compressed file. \n" +
                     "File did not start with the huff magic number.");
         }
         int countType = bis.readBits(BITS_PER_INT);
@@ -200,22 +200,34 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             }
         }
         tempFreq.put(IHuffConstants.PSEUDO_EOF, 1);
-//        System.out.println("Printing: tempFreq" + tempFreq);
         PriorityQueue314<TreeNode> decompQueue = getQueue(tempFreq);
         TreeNode decompRoot = createTree(decompQueue);
-        int dirCheck = bis.readBits(1);
-        while (dirCheck != -1) {
-            TreeNode currentRoot = decompRoot;
-            while (!(currentRoot.getLeft() == null && currentRoot.getRight() == null)) {
-                if (dirCheck == 0) {
-                    currentRoot = currentRoot.getLeft();
+        int temp = decoder(bis, bos, decompRoot);
+        return 0;
+    }
+
+    private int decoder(BitInputStream bis, BitOutputStream bos, TreeNode decompRoot) throws IOException {
+        boolean finished = false;
+        TreeNode startingRoot = decompRoot;
+        while (!finished) {
+            int dirCheck = bis.readBits(1);
+            if (dirCheck == -1) {
+                throw new IOException("Error reading compressed file. \n" +
+                        "unexpected end of input. No PSEUDO_EOF value.");
+            } else {
+                if (startingRoot.getValue() == PSEUDO_EOF) {
+                    finished = true;
+                } else if ((startingRoot.getLeft() == null && startingRoot.getRight() == null)) {
+                    int treeVal = startingRoot.getValue();
+                    System.out.println(treeVal);
+                    bos.writeBits(BITS_PER_INT, treeVal);
+                    startingRoot = decompRoot;
+                } else if (dirCheck == 0) {
+                    startingRoot = startingRoot.getLeft();
                 } else if (dirCheck == 1) {
-                    currentRoot = currentRoot.getRight();
+                    startingRoot = startingRoot.getRight();
                 }
-                dirCheck = bis.readBits(1);
             }
-            int treeVal = currentRoot.getValue();
-            System.out.println(treeVal);
         }
         return 0;
     }
