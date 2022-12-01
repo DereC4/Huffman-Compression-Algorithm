@@ -203,12 +203,13 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             tempFreq.put(IHuffConstants.PSEUDO_EOF, 1);
             PriorityQueue314<TreeNode> decompQueue = getQueue(tempFreq);
             TreeNode decompRoot = createTree(decompQueue);
-            int temp = decoder(bis, bos, decompRoot);
+            decoder(bis, bos, decompRoot);
         }
         else if (countType == STORE_TREE) {
             TreeNode decompRoot = new TreeNode(-1 , -1);
-            decompRoot = createTreeRec(bis, decompRoot);
-            int temp = decoder(bis, bos, decompRoot);
+            int numBits = bis.readBits(BITS_PER_INT);
+            decompRoot = createTreeRec(bis);
+            decoder(bis, bos, decompRoot);
         }
         return 0;
     }
@@ -243,13 +244,13 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         return 0;
     }
 
-    public TreeNode createTreeRec(BitInputStream bis, TreeNode current) throws IOException {
+    public TreeNode createTreeRec(BitInputStream bis) throws IOException {
         int tempBit = bis.readBits(1);
         if(tempBit == 0) {
             // Internal node
             TreeNode tempNode = new TreeNode(-1, -1);
-            tempNode.setLeft(createTreeRec(bis, tempNode));
-            tempNode.setRight(createTreeRec(bis, tempNode));
+            tempNode.setLeft(createTreeRec(bis));
+            tempNode.setRight(createTreeRec(bis));
             return tempNode;
         }
         else if(tempBit == 1) {
@@ -258,6 +259,9 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             TreeNode tempNode = new TreeNode(nodeValue, -1);
             return tempNode;
         }
+//        else {
+//            myViewer.showError("catastrophic failure");
+//        }
         return null;
     }
 
