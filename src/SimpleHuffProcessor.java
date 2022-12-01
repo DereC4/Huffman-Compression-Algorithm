@@ -191,9 +191,11 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                     "File did not start with the huff magic number.");
         }
         int countType = bis.readBits(BITS_PER_INT);
+        int bitCount = 0;
+        TreeNode decompRoot;
         if(countType == STORE_COUNTS) {
-            Map<Integer, Integer> tempFreq = new TreeMap<>();
             // Undo the SCF compression which stored every character frequency
+            Map<Integer, Integer> tempFreq = new TreeMap<>();
             for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
                 int frequencyInOriginalFile = bis.readBits(BITS_PER_INT);
                 if (frequencyInOriginalFile > 0) {
@@ -202,28 +204,34 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             }
             tempFreq.put(IHuffConstants.PSEUDO_EOF, 1);
             PriorityQueue314<TreeNode> decompQueue = getQueue(tempFreq);
-            TreeNode decompRoot = createTree(decompQueue);
-            decoder(bis, bos, decompRoot);
+            decompRoot = createTree(decompQueue);
+            bitCount = decoder(bis, bos, decompRoot);
         }
         else if (countType == STORE_TREE) {
-            TreeNode decompRoot = new TreeNode(-1 , -1);
             int numBits = bis.readBits(BITS_PER_INT);
-            decompRoot = createTreeRec(bis);
-            decoder(bis, bos, decompRoot);
+            decompRoot = createTreeFromBits(bis);
+            bitCount = decoder(bis, bos, decompRoot);
         }
-        return 0;
+        showString(bitCount + " bits written.");
+        return bitCount;
     }
 
+    /**
+     * Reads in bit by bit and traverses the huffman tree depending on the bit value
+     * A bit value of 0 corresponds to a left traversal while 1 represents a right traversal
+     * @throws IOException
+     */
     private int decoder(BitInputStream bis, BitOutputStream bos, TreeNode decompRoot) throws IOException {
         boolean finished = false;
         TreeNode current = decompRoot;
+        int bitCount = 0;
         int dirCheck = 0;
         while (!finished && !(dirCheck == -1)) {
             dirCheck = bis.readBits(1);
             if (dirCheck == -1) {
                 System.out.println("NO EOF");
-//                throw new IOException("Error reading compressed file. \n" +
-//                        "unexpected end of input. No PSEUDO_EOF value.");
+                throw new IOException("Error reading compressed file. \n" +
+                        "unexpected end of input. No PSEUDO_EOF value.");
             } else {
                 if (dirCheck == 0) {
                     current = current.getLeft();
@@ -235,22 +243,28 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                     finished = true;
                 } else if (current.isLeaf()) {
                     int treeVal = current.getValue();
-                    System.out.println(treeVal);
                     bos.writeBits(BITS_PER_INT, treeVal);
                     current = decompRoot;
+                    bitCount++;
                 }
             }
         }
-        return 0;
+        return bitCount;
     }
 
-    public TreeNode createTreeRec(BitInputStream bis) throws IOException {
+    /**
+     * Creates a Huffman tree from a STF header format where 0 corresponds to an internal node
+     * while 1 corresponds to a leaf node
+     * @return A TreeNode to be set as the child of a previous TreeNode
+     * @throws IOException
+     */
+    private TreeNode createTreeFromBits(BitInputStream bis) throws IOException {
         int tempBit = bis.readBits(1);
         if(tempBit == 0) {
             // Internal node
             TreeNode tempNode = new TreeNode(-1, -1);
-            tempNode.setLeft(createTreeRec(bis));
-            tempNode.setRight(createTreeRec(bis));
+            tempNode.setLeft(createTreeFromBits(bis));
+            tempNode.setRight(createTreeFromBits(bis));
             return tempNode;
         }
         else if(tempBit == 1) {
@@ -259,9 +273,9 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             TreeNode tempNode = new TreeNode(nodeValue, -1);
             return tempNode;
         }
-//        else {
-//            myViewer.showError("catastrophic failure");
-//        }
+        else {
+            myViewer.showError("catastrophic failure");
+        }
         return null;
     }
 
