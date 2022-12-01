@@ -193,21 +193,13 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         int countType = bis.readBits(BITS_PER_INT);
         int bitCount = 0;
         TreeNode decompRoot;
-        if(countType == STORE_COUNTS) {
+        if (countType == STORE_COUNTS) {
             // Undo the SCF compression which stored every character frequency
-            Map<Integer, Integer> tempFreq = new TreeMap<>();
-            for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
-                int frequencyInOriginalFile = bis.readBits(BITS_PER_INT);
-                if (frequencyInOriginalFile > 0) {
-                    tempFreq.put(k, frequencyInOriginalFile);
-                }
-            }
-            tempFreq.put(IHuffConstants.PSEUDO_EOF, 1);
-            PriorityQueue314<TreeNode> decompQueue = getQueue(tempFreq);
-            decompRoot = createTree(decompQueue);
+            showString("Uncompressing in SCF");
+            decompRoot = createTreeSCF(bis);
             bitCount = decoder(bis, bos, decompRoot);
-        }
-        else if (countType == STORE_TREE) {
+        } else if (countType == STORE_TREE) {
+            showString("Uncompressing in STF");
             int numBits = bis.readBits(BITS_PER_INT);
             decompRoot = createTreeFromBits(bis);
             bitCount = decoder(bis, bos, decompRoot);
@@ -219,17 +211,17 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     /**
      * Reads in bit by bit and traverses the huffman tree depending on the bit value
      * A bit value of 0 corresponds to a left traversal while 1 represents a right traversal
+     *
      * @throws IOException
      */
-    private int decoder(BitInputStream bis, BitOutputStream bos, TreeNode decompRoot) throws IOException {
+    private int decoder(BitInputStream bis, BitOutputStream bos, TreeNode root) throws IOException {
         boolean finished = false;
-        TreeNode current = decompRoot;
+        TreeNode current = root;
         int bitCount = 0;
         int dirCheck = 0;
         while (!finished && !(dirCheck == -1)) {
             dirCheck = bis.readBits(1);
             if (dirCheck == -1) {
-                System.out.println("NO EOF");
                 throw new IOException("Error reading compressed file. \n" +
                         "unexpected end of input. No PSEUDO_EOF value.");
             } else {
@@ -239,12 +231,10 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                     current = current.getRight();
                 }
                 if (current.getValue() == PSEUDO_EOF) {
-                    System.out.println("FINISHED");
                     finished = true;
                 } else if (current.isLeaf()) {
-                    int treeVal = current.getValue();
-                    bos.write(treeVal);
-                    current = decompRoot;
+                    bos.write(current.getValue());
+                    current = root;
                     bitCount++;
                 }
             }
@@ -253,27 +243,46 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     }
 
     /**
+     * Creates a Huffman tree from a SCF header format where the frequencies and values of
+     * characters in ASCII are given
+     *
+     * @return A TreeNode to be set as the child of a previous TreeNode
+     * @throws IOException
+     */
+    private TreeNode createTreeSCF(BitInputStream bis) throws IOException {
+        Map<Integer, Integer> tempFreq = new TreeMap<>();
+        for (int k = 0; k < IHuffConstants.ALPH_SIZE; k++) {
+            int frequencyInOriginalFile = bis.readBits(BITS_PER_INT);
+            if (frequencyInOriginalFile > 0) {
+                tempFreq.put(k, frequencyInOriginalFile);
+            }
+        }
+        tempFreq.put(IHuffConstants.PSEUDO_EOF, 1);
+        PriorityQueue314<TreeNode> decompQueue = getQueue(tempFreq);
+        return createTree(decompQueue);
+    }
+
+    /**
      * Creates a Huffman tree from a STF header format where 0 corresponds to an internal node
      * while 1 corresponds to a leaf node
+     *
      * @return A TreeNode to be set as the child of a previous TreeNode
      * @throws IOException
      */
     private TreeNode createTreeFromBits(BitInputStream bis) throws IOException {
         int tempBit = bis.readBits(1);
-        if(tempBit == 0) {
+        if (tempBit == 0) {
             // Internal node
             TreeNode tempNode = new TreeNode(-1, -1);
             tempNode.setLeft(createTreeFromBits(bis));
             tempNode.setRight(createTreeFromBits(bis));
             return tempNode;
-        }
-        else if(tempBit == 1) {
+        } else if (tempBit == 1) {
             // Leaf node
-            int nodeValue = bis.readBits(BITS_PER_WORD+1);
+            int nodeValue = bis.readBits(BITS_PER_WORD + 1);
             TreeNode tempNode = new TreeNode(nodeValue, -1);
             return tempNode;
-        }
-        else {
+        } else {
             myViewer.showError("catastrophic failure");
         }
         return null;
