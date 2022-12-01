@@ -207,6 +207,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         }
         else if (countType == STORE_TREE) {
             TreeNode decompRoot = new TreeNode(-1 , -1);
+            int bitNum = bis.readBits(BITS_PER_INT);
             decompRoot = createTreeRec(bis, decompRoot);
             int temp = decoder(bis, bos, decompRoot);
         }
