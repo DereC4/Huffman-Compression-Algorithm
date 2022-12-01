@@ -243,7 +243,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                     finished = true;
                 } else if (current.isLeaf()) {
                     int treeVal = current.getValue();
-                    bos.writeBits(BITS_PER_INT, treeVal);
+                    bos.write(treeVal);
                     current = decompRoot;
                     bitCount++;
                 }
@@ -269,7 +269,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         }
         else if(tempBit == 1) {
             // Leaf node
-            int nodeValue = bis.readBits(9);
+            int nodeValue = bis.readBits(BITS_PER_WORD+1);
             TreeNode tempNode = new TreeNode(nodeValue, -1);
             return tempNode;
         }
