@@ -317,7 +317,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             if (dirCheck == -1) {
                 throw new IOException("Error reading compressed file. \n" +
                         "unexpected end of input. No PSEUDO_EOF value.");
-            } else {Shouldn't Be
+            } else {
                 if (dirCheck == 0) {
                     current = current.getLeft();
                 } else if (dirCheck == 1) {
