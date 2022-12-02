@@ -194,12 +194,15 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         BitInputStream bits = new BitInputStream(in);
         BitOutputStream outs = new BitOutputStream(out);
         outs.writeBits(BITS_PER_INT, MAGIC_NUMBER);
-        outs.writeBits(BITS_PER_INT, STORE_TREE);
+
+        
         System.out.println(mapofwords);
 
         if (header == IHuffConstants.STORE_COUNTS) {
+            outs.writeBits(BITS_PER_INT, STORE_COUNTS);
             standardCountsHeader(outs);
         } else {
+            outs.writeBits(BITS_PER_INT, STORE_TREE);
             standardTreeHeader(outs);
         }
 
