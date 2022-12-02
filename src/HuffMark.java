@@ -17,7 +17,7 @@ public class HuffMark {
     private long myTotalCompressedBytes;
     
     private IHuffProcessor myHuffer;
-    private static String SUFFIX = ".hf";
+    private static String SUFFIX = ".hffffff";
     private static boolean FAST_READER = true;
     
     public void compress(File f) throws IOException{

@@ -1,18 +1,18 @@
 /*  Student information for assignment:
  *
- *  On <MY|OUR> honor, <NAME1> and <NAME2), this programming assignment is <MY|OUR> own work
- *  and <I|WE> have not provided this code to any other student.
+ *  On OUR honor, Derek and Shanti, this programming assignment is <MY|OUR> own work
+ *  and WE have not provided this code to any other student.
  *
- *  Number of slip days used:
+ *  Number of slip days used: 1
  *
- *  Student 1 (Student whose Canvas account is being used)
- *  UTEID:
- *  email address:
- *  Grader name:
+ *  Student 1
+ *  UTEID: dyc377
+ *  email address: derexh2so4@utexas.edu
+ *  Grader name: Lilly Tian
  *
  *  Student 2
- *  UTEID:
- *  email address:
+ *  UTEID: sc66349
+ *  email address: shantikiranc@utexas.edu
  *
  */
 
@@ -64,15 +64,13 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         bits = new BitInputStream(in);
         // Process for getting word frequencies, enqueueing them, and converting to Huffman Tree
         mapofwords = getMapOfFreq(bits);
-        showString("Map of frequencies created!");
-        showString(mapofwords.toString());
+        showString("Map of frequencies created! " + mapofwords);
         queue = getQueue(mapofwords);
         root = createTree(queue);
         header = headerFormat;
         Map<Integer, String> curr = new TreeMap<>();
         getHuffCodesHelper(curr, "", root);
         values = curr;
-
         in.reset();
         bits = new BitInputStream(in);
         if (header == IHuffConstants.STORE_COUNTS) {
@@ -87,6 +85,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     /**
      * Helper method to get the size of file in SCF format
+     *
      * @return The size of file in SCF format
      * @throws IOException
      */
@@ -107,6 +106,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     /**
      * Helper method to get the size of file in STF format
+     *
      * @return The size of file in STF format
      * @throws IOException
      */
@@ -130,6 +130,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     /**
      * Creates the Huffman Tree given a PriorityQueue314 with frequencies
+     *
      * @return The last value in the queue, the root of the Huffman Tree
      */
     private TreeNode createTree(PriorityQueue314<TreeNode> queue) {
@@ -166,6 +167,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     /**
      * Generates the map of frequencies for the characters based on the input stream
+     *
      * @throws IOException
      */
     private Map<Integer, Integer> getMapOfFreq(BitInputStream bits) throws IOException {
@@ -269,7 +271,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     /**
      * Helper method that writes the standard tree header
-\     */
+     * \
+     */
     private void standardTreeHeader(BitOutputStream outs) {
         TreeNode n = root;
         int allNodes = getSize(n);
@@ -336,6 +339,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * Reads in bit by bit and traverses the huffman tree depending on the bit value
      * A bit value of 0 corresponds to a left traversal while 1 represents a right
      * traversal
+     *
      * @throws IOException
      */
     private int decoder(BitInputStream bis, BitOutputStream bos, TreeNode root) throws IOException {
@@ -369,6 +373,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     /**
      * Creates a Huffman tree from a SCF header format where the frequencies and
      * values of characters in ASCII are given
+     *
      * @return A TreeNode to be set as the child of a previous TreeNode
      * @throws IOException
      */
@@ -411,10 +416,17 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         return null;
     }
 
+    /**
+     * @param viewer is the view for communicating.
+     */
     public void setViewer(IHuffViewer viewer) {
         myViewer = viewer;
     }
 
+    /**
+     * Shows a string to the GUI
+     * @param s
+     */
     private void showString(String s) {
         if (myViewer != null) {
             myViewer.update(s);
