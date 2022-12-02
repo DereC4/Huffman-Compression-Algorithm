@@ -219,7 +219,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         for (int x = 0; x < value.length(); x++) {
             outs.writeBits(1, value.charAt(x));
         }
-
+        outs.close();
         return sizeOfNewFile;
     }
 
@@ -296,6 +296,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             bitCount = decoder(bis, bos, decompRoot);
         }
         showString(bitCount + " bits written.");
+        bos.close();
         return bitCount;
     }
 
@@ -316,7 +317,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             if (dirCheck == -1) {
                 throw new IOException("Error reading compressed file. \n" +
                         "unexpected end of input. No PSEUDO_EOF value.");
-            } else {
+            } else {Shouldn't Be
                 if (dirCheck == 0) {
                     current = current.getLeft();
                 } else if (dirCheck == 1) {
